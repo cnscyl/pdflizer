@@ -1,4 +1,4 @@
-import React, { useState, useRef, ChangeEvent } from 'react';
+import React, { useState, useRef, ChangeEvent, DragEvent } from 'react'; // DragEvent ekledik
 import { UploadCloud, FileText, X, Sparkles } from 'lucide-react';
 
 interface UploaderProps {
@@ -10,18 +10,42 @@ export default function Uploader({ onSummaryResult, onLoading }: UploaderProps) 
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isDragging, setIsDragging] = useState(false); // <-- Sürükleme durumunu tutan state
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Dosya doğrulama mantığını ortak bir fonksiyona aldık
+  const handleFileSelection = (selectedFile: File) => {
+    if (selectedFile.type !== 'application/pdf') {
+      setError('Lütfen sadece PDF dosyası yükleyin.');
+      setFile(null);
+      return;
+    }
+    setError('');
+    setFile(selectedFile);
+  };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const selectedFile = e.target.files[0];
-      if (selectedFile.type !== 'application/pdf') {
-        setError('Lütfen sadece PDF dosyası yükleyin.');
-        setFile(null);
-        return;
-      }
-      setError('');
-      setFile(selectedFile);
+      handleFileSelection(e.target.files[0]);
+    }
+  };
+
+  // <-- Sürükle-Bırak Fonksiyonları
+  const onDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); // Tarayıcının dosyayı açmasını engeller
+    setIsDragging(true);
+  };
+
+  const onDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const onDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileSelection(e.dataTransfer.files[0]);
     }
   };
 
@@ -67,12 +91,26 @@ export default function Uploader({ onSummaryResult, onLoading }: UploaderProps) 
       {!file ? (
         <div 
           onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-slate-200 bg-slate-50 rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:border-blue-300 hover:bg-blue-50/30 group"
+          onDragOver={onDragOver}   // <-- Eklendi
+          onDragLeave={onDragLeave} // <-- Eklendi
+          onDrop={onDrop}           // <-- Eklendi
+          className={`border-2 border-dashed rounded-2xl px-6 py-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all group ${
+            isDragging 
+              ? "border-blue-500 bg-blue-50/50 scale-[1.02]" // <-- Sürüklerken görünecek stil
+              : "border-slate-200 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/30"
+          }`}
         >
-          <div className="bg-slate-100 p-4 rounded-xl mb-4 border border-slate-200 group-hover:bg-blue-50 transition-colors">
-            <UploadCloud size={28} className="text-slate-500 group-hover:text-blue-600 transition-colors" />
+          <div className={`p-4 rounded-xl mb-4 border transition-colors ${
+            isDragging ? "bg-blue-100 border-blue-200" : "bg-slate-100 border-slate-200 group-hover:bg-blue-50"
+          }`}>
+            <UploadCloud 
+              size={28} 
+              className={`transition-colors ${isDragging ? "text-blue-600" : "text-slate-500 group-hover:text-blue-600"}`} 
+            />
           </div>
-          <p className="text-sm font-semibold text-slate-800">PDF Dosyasını Seç</p>
+          <p className="text-sm font-semibold text-slate-800">
+            {isDragging ? "Buraya Bırakın" : "PDF Dosyasını Seç veya Sürükle"}
+          </p>
           <p className="text-xs text-slate-500 mt-1 max-w-[200px]">Maksimum dosya boyutu 10MB.</p>
           <input 
             type="file" 
@@ -122,7 +160,7 @@ export default function Uploader({ onSummaryResult, onLoading }: UploaderProps) 
           </>
         ) : (
           <>
-            <Sparkles size={18} className="text-blue-400" />
+            <Sparkles size={18} className="text-white opacity-70" />
             Özeti Oluştur
           </>
         )}
