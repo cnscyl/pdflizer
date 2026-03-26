@@ -29,7 +29,7 @@ const Home: NextPage = () => {
               </h1>
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-slate-400 hidden sm:inline">Gücünü</span>
+              <span className="text-slate-400 hidden sm:inline">Güçlü Analizler</span>
               <div className="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200/50">
                 <span className="font-bold text-slate-900 text-xs">Gemini AI</span>
                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>

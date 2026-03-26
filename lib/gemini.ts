@@ -1,3 +1,4 @@
+// 1. Özetleme Fonksiyonu (Mevcut yapın, mode parametreli)
 export const summarizeText = async (text: string, mode: string = 'short') => {
   const apiKey = process.env.GEMINI_API_KEY;
   const model = process.env.GEMINI_MODEL ?? "models/gemini-2.5-flash";
@@ -6,35 +7,43 @@ export const summarizeText = async (text: string, mode: string = 'short') => {
     throw new Error("GEMINI_API_KEY eksik. .env.local içinde tanımlayın.");
   }
 
-  // --- MODA GÖRE TALİMATLARI BELİRLEME ---
   let instruction = "";
-  
   if (mode === 'short') {
-    instruction = `
-      Aşağıdaki metni en kritik 3-5 madde ile çok kısa ve öz bir şekilde Türkçe özetle. 
-      Sadece en önemli noktaları vurgula, detaylara girme.
-      Markdown listesi kullan.`;
+    instruction = "Aşağıdaki metni en kritik 3-5 madde ile çok kısa ve öz bir şekilde Türkçe özetle. Markdown listesi kullan.";
   } else if (mode === 'detailed') {
-    instruction = `
-      Aşağıdaki metni çok detaylı bir şekilde Türkçe analiz et. 
-      Şu yapıya sadık kal:
-      1. Kapsamlı bir giriş cümlesi.
-      2. Ana başlıklar ve alt detaylar (bullet points).
-      3. Teknik terimler ve kritik vurgular.
-      4. Sonuç veya genel değerlendirme.`;
+    instruction = "Aşağıdaki metni çok detaylı bir şekilde Türkçe analiz et. Giriş, ana başlıklar, teknik terimler ve sonuç bölümlerini içeren kapsamlı bir yapı kur.";
   } else if (mode === 'actions') {
-    instruction = `
-      Aşağıdaki metni analiz ederek "Eylem Planı" oluştur. 
-      Şu yapıya sadık kal:
-      1. Metinden çıkarılabilecek somut aksiyonlar (Yapılması gerekenler).
-      2. Varsa önemli tarihler, isimler veya görev dağılımları.
-      3. Dikkat edilmesi gereken riskler veya uyarılar.`;
+    instruction = "Aşağıdaki metinden çıkarılabilecek somut aksiyonları, yapılması gerekenleri ve varsa önemli tarihleri listeleyerek bir Eylem Planı oluştur.";
   }
 
+  return callGemini(text, instruction, apiKey, model);
+};
+
+// 2. YENİ: Soru-Cevap Fonksiyonu (Chat özelliği için)
+export const askQuestion = async (text: string, question: string) => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  const model = process.env.GEMINI_MODEL ?? "models/gemini-2.5-flash";
+
+  if (!apiKey) throw new Error("GEMINI_API_KEY eksik.");
+
+  const instruction = `
+    Sen bir doküman asistanısın. Aşağıda sana verilen metne dayanarak kullanıcıdan gelen soruyu yanıtla.
+    Kurallar:
+    1. Yanıtı sadece metne dayanarak ver.
+    2. Eğer yanıt metinde yoksa, bunu kibarca belirt.
+    3. Yanıtı Türkçe, net ve kısa ver.
+    
+    SORU: ${question}`;
+
+  return callGemini(text, instruction, apiKey, model);
+};
+
+// 3. Ortak Gemini Çağrı Yapısı (Kod tekrarını önlemek için)
+async function callGemini(text: string, instruction: string, apiKey: string, model: string) {
   const payload = {
     contents: [{
       parts: [{
-        text: `${instruction}\n\nMetin: \n\n${text.substring(0, 25000)}`
+        text: `${instruction}\n\nMETİN: \n\n${text.substring(0, 30000)}`
       }]
     }]
   };
@@ -58,17 +67,14 @@ export const summarizeText = async (text: string, mode: string = 'short') => {
 
       if (response.ok) {
         const out = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!out) throw new Error("Gemini yanıtından metin alınamadı.");
+        if (!out) throw new Error("Metin alınamadı.");
         return out;
       }
-
-      lastError = data?.error?.message ?? `HTTP ${response.status} ${response.statusText}`;
-      console.log(`Gemini denemesi başarısız: ${url.split('/')[3]} - ${lastError}`);
+      lastError = data?.error?.message ?? `HTTP ${response.status}`;
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err);
       continue;
     }
   }
-
-  throw new Error(`Gemini generateContent başarısız. Son hata: ${lastError ?? "bilinmiyor"}`);
-};
+  throw new Error(`Gemini hatası: ${lastError}`);
+}
