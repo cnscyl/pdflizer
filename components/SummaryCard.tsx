@@ -4,14 +4,12 @@ import {
   Check, 
   Sparkles, 
   BrainCircuit, 
-  MessageSquare, // Eğer MessageSquareSend hata veriyorsa bunu kullanabilirsin
+  MessageSquare, 
   SendHorizontal, 
   Bot, 
   Loader2 
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-
-
 
 interface SummaryCardProps {
   summary: string;
@@ -52,14 +50,14 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
     if (!question.trim() || !summary || isChatLoading) return;
 
     setIsChatLoading(true);
-    setChatAnswer(''); // Yeni soru için eski cevabı temizle
+    setChatAnswer(''); 
 
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          pdfText: summary, // Şimdilik özet üzerinden soruyoruz, index.tsx'ten fullText gelirse onu bağlayabilirsin
+          pdfText: summary, 
           question: question 
         }),
       });
@@ -68,7 +66,7 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
       if (!response.ok) throw new Error(data.error || "Cevap alınamadı");
       
       setChatAnswer(data.answer);
-      setQuestion(''); // Soruyu temizle
+      setQuestion(''); 
     } catch (err) {
       console.error("Chat Hatası:", err);
       setChatAnswer("Üzgünüm, bu soruyu şu an yanıtlayamıyorum.");
@@ -127,7 +125,7 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
           </div>
         ) : summary ? (
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-700">
-            <article className="prose prose-slate max-w-none text-slate-700 leading-relaxed font-medium">
+            <article className="prose prose-slate max-w-none text-slate-700 leading-relaxed font-medium mb-10">
               <ReactMarkdown 
                 components={{
                   p: ({children}) => <p className="mb-4 last:mb-0">{children}</p>,
@@ -143,7 +141,7 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
             </article>
 
             {/* Chat Bölümü */}
-            <div className="mt-12 pt-8 border-t border-slate-100 space-y-6">
+            <div className="mt-12 pt-8 border-t border-slate-100 space-y-6 bg-slate-50/30 -mx-4 px-4 pb-4 rounded-b-[2.5rem]">
               <div className="flex items-center gap-2 text-slate-800">
                 <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
                   <MessageSquare size={18} />
@@ -158,7 +156,7 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
                   onChange={(e) => setQuestion(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAskQuestion()}
                   placeholder="Bu belgede bahsedilen riskler neler?"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-[1.25rem] px-5 py-4 pr-14 text-sm outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
+                  className="w-full bg-white border border-slate-200 rounded-[1.25rem] px-5 py-4 pr-14 text-sm outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all placeholder:text-slate-400 shadow-sm"
                 />
                 <button 
                   onClick={handleAskQuestion}
@@ -171,20 +169,22 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
 
               {/* Chat Cevap Alanı */}
               {(isChatLoading || chatAnswer) && (
-                <div className="bg-slate-50 border border-slate-100 p-5 rounded-[1.5rem] animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="bg-white border border-blue-100 p-5 rounded-[1.5rem] shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
                   <div className="flex items-center gap-2 mb-3 text-blue-600 font-bold text-[10px] uppercase tracking-[0.2em]">
-                    <Bot size={14} className="animate-bounce" /> AI Yanıtı
+                    <Bot size={14} className={isChatLoading ? "animate-bounce" : ""} /> AI Yanıtı
                   </div>
                   {isChatLoading ? (
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 py-2">
                       <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce"></div>
                       <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce delay-75"></div>
                       <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce delay-150"></div>
                     </div>
                   ) : (
-                    <p className="text-sm text-slate-700 leading-relaxed font-semibold">
-                      {chatAnswer}
-                    </p>
+                    <div className="text-sm text-slate-700 leading-relaxed font-medium prose-sm prose-slate prose-strong:text-blue-700 prose-strong:font-bold">
+                      <ReactMarkdown>
+                        {chatAnswer}
+                      </ReactMarkdown>
+                    </div>
                   )}
                 </div>
               )}
