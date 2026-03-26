@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Check, Sparkles, BrainCircuit } from 'lucide-react'; // BrainCircuit ekledik
+import { Copy, Check, Sparkles, BrainCircuit } from 'lucide-react';
+import ReactMarkdown from 'react-markdown'; // 1. Importu ekledik
 
 interface SummaryCardProps {
   summary: string;
-  isLoading?: boolean; // isLoading prop'u ekledik
+  isLoading?: boolean;
 }
 
 export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
@@ -29,7 +30,7 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
 
   return (
     <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm ring-1 ring-slate-200/70 border border-slate-100 flex flex-col h-full min-h-[550px] transition-all">
-      {/* Başlık ve Kopyala Butonu Alanı */}
+      {/* Başlık Alanı */}
       <div className="flex justify-between items-center mb-8 border-b border-slate-50 pb-5">
         <div className="flex items-center gap-3">
           <div className={`p-2.5 rounded-2xl ring-1 ${isLoading ? "bg-blue-600 animate-pulse ring-blue-600/20" : "bg-blue-600/10 ring-blue-600/15"}`}>
@@ -63,27 +64,33 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
       {/* İçerik Alanı */}
       <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar">
         {isLoading ? (
-          /* Yükleme Ekranı (Skeleton) */
           <div className="space-y-4 animate-in fade-in duration-500">
             <div className="flex items-center space-x-3 mb-6">
-              <BrainCircuit className="text-blue-500 animate-spin-slow" size={20} />
+              <BrainCircuit className="text-blue-500 animate-spin" size={20} />
               <span className="text-sm font-medium text-slate-500">Gemini dokümanı tarıyor...</span>
             </div>
             <div className="h-4 bg-slate-100 rounded-full w-full animate-pulse"></div>
-            <div className="h-4 bg-slate-100 rounded-full w-[90%] animate-pulse delay-75"></div>
-            <div className="h-4 bg-slate-100 rounded-full w-[95%] animate-pulse delay-100"></div>
-            <div className="h-4 bg-slate-100 rounded-full w-[40%] animate-pulse delay-150"></div>
-            
-            <div className="pt-8 space-y-4">
-              <div className="h-4 bg-slate-100 rounded-full w-full animate-pulse"></div>
-              <div className="h-4 bg-slate-100 rounded-full w-[85%] animate-pulse"></div>
-            </div>
+            <div className="h-4 bg-slate-100 rounded-full w-[90%] animate-pulse"></div>
+            <div className="h-4 bg-slate-100 rounded-full w-[40%] animate-pulse"></div>
           </div>
         ) : summary ? (
           <div className="animate-in fade-in slide-in-from-bottom-3 duration-700">
-            <p className="text-slate-700 leading-relaxed whitespace-pre-wrap font-medium text-[16px]">
-              {summary}
-            </p>
+            {/* 2. Düz metin yerine Markdown bileşenini kullandık */}
+            <article className="prose prose-slate max-w-none text-slate-700 leading-relaxed font-medium">
+              <ReactMarkdown 
+                components={{
+                  // Markdown içindeki özel yapıları Tailwind ile şıklaştıralım
+                  p: ({children}) => <p className="mb-4 last:mb-0">{children}</p>,
+                  strong: ({children}) => <strong className="font-bold text-slate-950 underline decoration-blue-200 decoration-2 underline-offset-2">{children}</strong>,
+                  ul: ({children}) => <ul className="list-disc pl-5 space-y-2 mb-4">{children}</ul>,
+                  li: ({children}) => <li className="marker:text-blue-500">{children}</li>,
+                  h1: ({children}) => <h1 className="text-2xl font-bold text-slate-900 mb-4">{children}</h1>,
+                  h2: ({children}) => <h2 className="text-xl font-bold text-slate-900 mt-6 mb-3">{children}</h2>,
+                }}
+              >
+                {summary}
+              </ReactMarkdown>
+            </article>
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-center space-y-6">
@@ -103,20 +110,14 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
         )}
       </div>
 
-      {/* Alt Bilgi Paneli */}
+      {/* Alt Bilgi */}
       {!isLoading && summary && (
-        <div className="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center">
+        <div className="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-              Gemini 2.5 Flash Engine
-            </span>
+            <span>Gemini 2.5 Flash Engine</span>
           </div>
-          <div className="bg-slate-50 px-3 py-1 rounded-full">
-             <span className="text-[10px] font-bold text-slate-400 uppercase">
-              {summary.length} Karakter
-             </span>
-          </div>
+          <span>{summary.length} Karakter</span>
         </div>
       )}
     </div>
