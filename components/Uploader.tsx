@@ -1,12 +1,11 @@
-import React, { useState, useRef, ChangeEvent, DragEvent } from 'react';
-import { UploadCloud, FileText, X, Sparkles, Loader2, ListChecks, Target, BookOpen } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { UploadCloud, FileText, X, Sparkles, Loader2, ListChecks, Target, BookOpen, FileCode, FileType } from 'lucide-react';
 
 interface UploaderProps {
   onSummaryResult: (summary: string) => void;
   onLoading: (loading: boolean) => void;
 }
 
-// Analiz derinliği seçenekleri
 const ANALISIS_MODES = [
   { id: 'short', label: 'Hızlı Özet', icon: Target, desc: 'En kritik 3-5 madde' },
   { id: 'detailed', label: 'Detaylı Analiz', icon: BookOpen, desc: 'Kapsamlı ve veriye dayalı' },
@@ -17,28 +16,50 @@ export default function Uploader({ onSummaryResult, onLoading }: UploaderProps) 
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [selectedMode, setSelectedMode] = useState('short'); // Varsayılan mod
+  const [selectedMode, setSelectedMode] = useState('short');
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const getFileIcon = () => {
+    if (!file) return <FileText size={20} />;
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (ext === 'pdf') return <FileText size={20} className="text-red-500" />;
+    if (ext === 'docx') return <FileCode size={20} className="text-blue-500" />;
+    if (ext === 'md') return <FileCode size={20} className="text-emerald-500" />;
+    return <FileType size={20} className="text-slate-500" />;
+  };
+
   const handleFileSelection = (selectedFile: File) => {
-    if (selectedFile.type !== 'application/pdf') {
-      setError('Lütfen sadece PDF dosyası yükleyin.');
+    const fileName = selectedFile.name.toLowerCase();
+    const fileType = selectedFile.type;
+
+    // Uzantı ve Tip kontrolünü birleştirdik
+    const isSupported = 
+      fileType === 'application/pdf' || 
+      fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+      fileType === 'text/plain' || 
+      fileType === 'text/markdown' ||
+      fileName.endsWith('.md') || 
+      fileName.endsWith('.txt');
+
+    if (!isSupported) {
+      setError('Lütfen sadece PDF, Word, TXT veya MD dosyası yükleyin.');
       setFile(null);
       return;
     }
-    if (selectedFile.size > 10 * 1024 * 1024) {
-      setError('Dosya boyutu 10MB\'dan büyük olamaz.');
+
+    if (selectedFile.size > 15 * 1024 * 1024) {
+      setError('Dosya boyutu 15MB\'dan büyük olamaz.');
       setFile(null);
       return;
     }
+
     setError('');
     setFile(selectedFile);
   };
 
   const handleUpload = async () => {
     if (!file) return;
-
     onSummaryResult('');
     setIsLoading(true);
     onLoading(true);
@@ -46,7 +67,7 @@ export default function Uploader({ onSummaryResult, onLoading }: UploaderProps) 
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('mode', selectedMode); // Seçilen modu API'ye gönderiyoruz
+    formData.append('mode', selectedMode);
 
     try {
       const response = await fetch('/api/upload', {
@@ -55,11 +76,7 @@ export default function Uploader({ onSummaryResult, onLoading }: UploaderProps) 
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Analiz sırasında bir hata oluştu.');
-      }
-
+      if (!response.ok) throw new Error(data.error || 'Analiz sırasında bir hata oluştu.');
       onSummaryResult(data.summary);
     } catch (err: any) {
       setError(err.message || 'Bir hata oluştu.');
@@ -91,20 +108,25 @@ export default function Uploader({ onSummaryResult, onLoading }: UploaderProps) 
           }`}
         >
           <div className="bg-white p-4 rounded-2xl mb-4 border border-slate-100 shadow-sm transition-transform group-hover:scale-110">
-            <UploadCloud size={30} className="text-blue-500" />
+            <UploadCloud size={30} className="text-blue-600" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-bold text-slate-700">PDF Sürükle veya Seç</p>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Max 10MB</p>
+            <p className="text-sm font-bold text-slate-700">Dosya Sürükle veya Seç</p>
+            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">PDF, DOCX, TXT, MD • MAX 15MB</p>
           </div>
-          <input type="file" ref={fileInputRef} onChange={(e) => e.target.files && handleFileSelection(e.target.files[0])} accept="application/pdf" className="hidden" />
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={(e) => e.target.files && handleFileSelection(e.target.files[0])} 
+            accept=".pdf,.docx,.txt,.md" 
+            className="hidden" 
+          />
         </div>
       ) : (
         <div className="space-y-5 animate-in fade-in zoom-in-95 duration-300">
-          {/* Seçili Dosya Kartı */}
           <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 flex items-center gap-4">
-            <div className="bg-blue-50 p-3 rounded-2xl text-blue-600 border border-blue-100/50">
-              <FileText size={20} />
+            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100/50">
+              {getFileIcon()}
             </div>
             <div className="flex-1 overflow-hidden">
               <p className="text-xs font-bold text-slate-900 truncate tracking-tight">{file.name}</p>
@@ -115,7 +137,6 @@ export default function Uploader({ onSummaryResult, onLoading }: UploaderProps) 
             </button>
           </div>
 
-          {/* Analiz Modu Seçimi (LLM İçin) */}
           <div className="space-y-2">
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] ml-1">Analiz Derinliği</span>
             <div className="grid grid-cols-1 gap-2">
@@ -148,7 +169,7 @@ export default function Uploader({ onSummaryResult, onLoading }: UploaderProps) 
       )}
 
       {error && (
-        <div className="bg-red-50 text-red-600 text-[10px] font-bold p-3 rounded-2xl border border-red-100 text-center animate-in slide-in-from-top-1">
+        <div className="bg-red-50 text-red-600 text-[10px] font-bold p-3 rounded-2xl border border-red-100 text-center">
           {error}
         </div>
       )}
@@ -165,7 +186,7 @@ export default function Uploader({ onSummaryResult, onLoading }: UploaderProps) 
         {isLoading ? (
           <>
             <Loader2 size={18} className="animate-spin" />
-            <span>ANALİZ BAŞLADI...</span>
+            <span>BELGE İŞLENİYOR...</span>
           </>
         ) : (
           <>

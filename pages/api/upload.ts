@@ -1,11 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import multer from 'multer';
 import { summarizeText } from '../../lib/gemini';
+import mammoth from 'mammoth'; // Word desteği için
 
 // @ts-ignore
 const pdf = require('pdf-parse');
 
-// NOT: formidable importu tamamen kaldırıldı, multer ile devam ediyoruz.
 const upload = multer({ storage: multer.memoryStorage() });
 
 export const config = {
@@ -27,38 +27,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') return res.status(405).json({ message: 'Method Not Allowed' });
 
   try {
-    // Multer dosya ve body alanlarını (mode dahil) ayrıştırır
     await runMiddleware(req, res, upload.single('file'));
     const fileRequest = req as any;
+    const file = fileRequest.file;
 
-    if (!fileRequest.file) return res.status(400).json({ message: 'Dosya yok' });
+    if (!file) return res.status(400).json({ message: 'Dosya yok' });
 
-    // Uploader.tsx'ten gelen modu yakala
     const mode = fileRequest.body.mode || 'short';
+    const fileName = file.originalname.toLowerCase();
+    let extractedText = "";
 
-    if (!pdf || !pdf.PDFParse) {
-      throw new Error("pdf-parse: PDFParse export bulunamadı");
+    // --- DOSYA TİPİNE GÖRE AYRIŞTIRMA ---
+    
+    if (fileName.endsWith('.pdf')) {
+      // PDF İşleme
+      if (!pdf || !pdf.PDFParse) throw new Error("pdf-parse hatası");
+      const parser = new pdf.PDFParse({
+        data: file.buffer,
+        verbosity: pdf.VerbosityLevel?.ERRORS ?? 0,
+      });
+      try {
+        const data = await parser.getText();
+        extractedText = data.text;
+      } finally {
+        await parser.destroy();
+      }
+    } 
+    else if (fileName.endsWith('.docx')) {
+      // Word (.docx) İşleme
+      const result = await mammoth.extractRawText({ buffer: file.buffer });
+      extractedText = result.value;
+    } 
+    else if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
+      // Hem .txt hem de .md dosyalarını düz metin olarak oku
+      extractedText = file.buffer.toString('utf8');
+    }
+    else {
+      return res.status(400).json({ message: 'Sadece PDF, DOCX ve TXT dosyaları desteklenir.' });
     }
 
-    const parser = new pdf.PDFParse({
-      data: fileRequest.file.buffer,
-      verbosity: pdf.VerbosityLevel?.ERRORS ?? 0,
-    });
-
-    try {
-      const data = await parser.getText();
-      if (!data?.text) throw new Error("PDF metni çıkarılamadı");
-      
-      // summarizeText artık 'mode' parametresini alıyor
-      const summary = await summarizeText(data.text, mode);
-      
-      return res.status(200).json({ summary });
-    } finally {
-      await parser.destroy();
+    // Metin kontrolü
+    if (!extractedText || extractedText.trim().length < 5) {
+      throw new Error("Dosya içeriği okunamadı veya boş.");
     }
+
+    // Gemini'ye Gönder
+    const summary = await summarizeText(extractedText, mode);
+    
+    return res.status(200).json({ summary });
 
   } catch (error: any) {
     console.error("Hata Detayı:", error);
-    return res.status(500).json({ message: 'Hata', error: error.message });
+    return res.status(500).json({ message: 'İşlem sırasında hata oluştu', error: error.message });
   }
 }
