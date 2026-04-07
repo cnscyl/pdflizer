@@ -7,14 +7,27 @@ export const summarizeText = async (text: string, mode: string = 'short') => {
     throw new Error("GEMINI_API_KEY eksik. .env.local içinde tanımlayın.");
   }
 
-  let instruction = "";
-  if (mode === 'short') {
-    instruction = "Aşağıdaki metni en kritik 3-5 madde ile çok kısa ve öz bir şekilde Türkçe özetle. Markdown listesi kullan.";
-  } else if (mode === 'detailed') {
-    instruction = "Aşağıdaki metni çok detaylı bir şekilde Türkçe analiz et. Giriş, ana başlıklar, teknik terimler ve sonuç bölümlerini içeren kapsamlı bir yapı kur.";
-  } else if (mode === 'actions') {
-    instruction = "Aşağıdaki metinden çıkarılabilecek somut aksiyonları, yapılması gerekenleri ve varsa önemli tarihleri listeleyerek bir Eylem Planı oluştur.";
-  }
+// lib/gemini.ts içindeki ilgili kısım
+
+let instruction = "";
+  
+if (mode === 'short') {
+  instruction = "Aşağıdaki metni en kritik 3-5 madde ile çok kısa ve öz bir şekilde Türkçe özetle. Markdown listesi kullan.";
+} else if (mode === 'detailed') {
+  instruction = "Aşağıdaki metni çok detaylı bir şekilde Türkçe analiz et. Giriş, ana başlıklar, teknik terimler ve sonuç bölümlerini içeren kapsamlı bir yapı kur.";
+} else if (mode === 'actions') {
+  instruction = "Aşağıdaki metinden çıkarılabilecek somut aksiyonları, yapılması gerekenleri ve varsa önemli tarihleri listeleyerek bir Eylem Planı oluştur.";
+} else if (mode === 'transcript') {
+  
+  instruction = `
+    Bu metin bir konuşma transkriptidir (toplantı, ders veya video kaydı). 
+    Lütfen şu adımları izle:
+    1. Konuşmacıların değindiği ana konuları ve temel argümanları belirle.
+    2. Konuşma diline özgü gereksiz tekrarları ve dolgu kelimeleri (ee, şey, yani vb.) ayıkla.
+    3. İçeriği mantıklı alt başlıklara ayırarak akıcı bir dille özetle.
+    4. Varsa alınan kararları veya 'aksiyon maddelerini' belirgin hale getir.
+    Yanıtı profesyonel bir toplantı tutanağı formatında Türkçe olarak hazırla.`;
+}
 
   return callGemini(text, instruction, apiKey, model);
 };
