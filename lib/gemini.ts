@@ -19,17 +19,21 @@ if (mode === 'short') {
 } else if (mode === 'actions') {
   instruction = "Aşağıdaki metinden çıkarılabilecek somut aksiyonları, yapılması gerekenleri ve varsa önemli tarihleri listeleyerek bir Eylem Planı oluştur.";
 } else if (mode === 'transcript') {
-  
   instruction = `
-    Bu metin bir konuşma transkriptidir (toplantı, ders veya video kaydı hangisi ise o şekilde analiz et). 
-    Hangi metin ise ona göre analiz et. Lütfen şu adımları izle:
-    1. Konuşmacıların değindiği ana konuları ve temel argümanları belirle.
-    2. Konuşma diline özgü gereksiz tekrarları ve dolgu kelimeleri (ee, şey, yani vb.) ayıkla ve bu maddeyi çıktı olarak gösterme.
-    3. İçeriği mantıklı alt başlıklara ayırarak akıcı bir dille özetle.
-    4. Varsa alınan kararları veya 'aksiyon maddelerini' belirgin hale getir.
-    Yanıtı profesyonel bir toplantı tutanağı formatında Türkçe olarak hazırla.`;
-}
+    SEN ÜST DÜZEY BİR YÖNETİM KURULU ANALİSTİSİN. 
+    Transkripti oku ve "Yönetici Özeti" formatında, sadece en kritik noktaları rapora dök.
 
+    LÜTFEN ŞU KURALLARA KESİN OLARAK UY:
+    1. RADİKAL ÖZETLEME: Selamlaşma, teknik kontroller, onay cümleleri ve önemsiz diyalogları tamamen ele. Sadece ana gündemleri ve alınan sonuçları yaz.
+    2. ÜÇÜNCÜ ŞAHIS VE RESMİ DİL: "Belirtmiştir", "İfade etmiştir", "Kararlaştırılmıştır" şeklinde profesyonel bir dil kullan.
+    3. KRİTİK GÖRÜŞLER: Sadece konunun gidişatını değiştiren Sn. [İsim Surname] görüşlerini tek birer cümle ile belirt.
+    4. NET KARARLAR: Her gündem maddesinin sonunda varsa alınan kararı "Karar:" başlığıyla kalınlaştırarak yaz.
+
+    FORMAT KURALLARI:
+    - ANA BAŞLIK için sadece "# " kullan. (Örn: # TOPLANTI TUTANAĞI)
+    - GÜNDEM BAŞLIKLARI için sadece "## " kullan. (Örn: ## 1. ÇEYREK BÜTÇE ANALİZİ)
+    - ASLA HTML kodu veya yıldız (*) kullanma. Sadece düz metin, # ve ## kullan.`;
+}
   return callGemini(text, instruction, apiKey, model);
 };
 
