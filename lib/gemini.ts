@@ -1,3 +1,4 @@
+
 // 1. Özetleme Fonksiyonu (Mevcut yapın, mode parametreli)
 export const summarizeText = async (text: string, mode: string = 'short') => {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -20,10 +21,10 @@ if (mode === 'short') {
 } else if (mode === 'transcript') {
   
   instruction = `
-    Bu metin bir konuşma transkriptidir (toplantı, ders veya video kaydı). 
-    Lütfen şu adımları izle:
+    Bu metin bir konuşma transkriptidir (toplantı, ders veya video kaydı hangisi ise o şekilde analiz et). 
+    Hangi metin ise ona göre analiz et. Lütfen şu adımları izle:
     1. Konuşmacıların değindiği ana konuları ve temel argümanları belirle.
-    2. Konuşma diline özgü gereksiz tekrarları ve dolgu kelimeleri (ee, şey, yani vb.) ayıkla.
+    2. Konuşma diline özgü gereksiz tekrarları ve dolgu kelimeleri (ee, şey, yani vb.) ayıkla ve bu maddeyi çıktı olarak gösterme.
     3. İçeriği mantıklı alt başlıklara ayırarak akıcı bir dille özetle.
     4. Varsa alınan kararları veya 'aksiyon maddelerini' belirgin hale getir.
     Yanıtı profesyonel bir toplantı tutanağı formatında Türkçe olarak hazırla.`;

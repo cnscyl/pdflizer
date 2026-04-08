@@ -11,7 +11,7 @@ interface UploaderProps {
 }
 
 const ANALISIS_MODES = [
-  { id: 'short', label: 'Hızlı Özet', icon: Target, desc: 'En kritik 3-5 madde' },
+  { id: 'short', label: 'Hızlı Analiz', icon: Target, desc: 'En kritik 3-5 madde' },
   { id: 'detailed', label: 'Detaylı Analiz', icon: BookOpen, desc: 'Kapsamlı ve veriye dayalı' },
   { id: 'transcript', label: 'Transkript Analizi', icon: MessageSquare, desc: 'Konuşma kayıtlarını notlara dönüştür' },
   { id: 'actions', label: 'Eylem Planı', icon: ListChecks, desc: 'Yapılması gerekenler odaklı' },

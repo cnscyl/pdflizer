@@ -12,7 +12,7 @@ const Home: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Pdflizer | Gemini ile PDF'ini Konuştur</title>
+        <title>DeepNode | Gemini ile PDF'ini Konuştur</title>
         <meta name="description" content="PDF dosyalarınızı Gemini AI ile saniyeler içinde özetleyin." />
       </Head>
 
@@ -25,7 +25,7 @@ const Home: NextPage = () => {
                 <Sparkles size={20} className="text-white" />
               </div>
               <h1 className="text-2xl font-bold tracking-tighter text-slate-950">
-                Pdflizer
+                DeepNode
               </h1>
             </div>
             <div className="flex items-center gap-2 text-sm">
@@ -50,7 +50,7 @@ const Home: NextPage = () => {
                     Doküman Yükle
                   </h2>
                   <p className="text-sm text-slate-500 mt-1">
-                    Özetlemek istediğin PDF dosyasını buraya sürükle veya seç.
+                    Özetlemek istediğin dosyayı buraya sürükle veya seç.
                   </p>
                 </div>
                 
@@ -80,7 +80,7 @@ const Home: NextPage = () => {
         {/* Basit Footer */}
         <footer className="max-w-7xl mx-auto px-6 py-8 border-t border-slate-100 text-center">
           <p className="text-xs text-slate-400 font-medium tracking-widest uppercase">
-            © 2026 Pdflizer AI • PDF Analiz Platformu
+            © 2026 DeepNode AI • PDF Analiz Platformu
           </p>
         </footer>
       </div>
