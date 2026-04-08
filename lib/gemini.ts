@@ -1,98 +1,98 @@
+import OpenAI from "openai";
 
-// 1. Özetleme Fonksiyonu (Mevcut yapın, mode parametreli)
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY, // .env.local dosyasında tanımlı olmalı
+});
+
+// 1. Özetleme Fonksiyonu
 export const summarizeText = async (text: string, mode: string = 'short') => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL ?? "models/gemini-2.5-flash";
+  const model = "gpt-4o"; // Radikal özetleme için en zeki model
 
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY eksik. .env.local içinde tanımlayın.");
-  }
-
-// lib/gemini.ts içindeki ilgili kısım
-
-let instruction = "";
+  let instruction = "";
   
-if (mode === 'short') {
-  instruction = "Aşağıdaki metni en kritik 3-5 madde ile çok kısa ve öz bir şekilde Türkçe özetle. Markdown listesi kullan.";
-} else if (mode === 'detailed') {
-  instruction = "Aşağıdaki metni çok detaylı bir şekilde Türkçe analiz et. Giriş, ana başlıklar, teknik terimler ve sonuç bölümlerini içeren kapsamlı bir yapı kur.";
-} else if (mode === 'actions') {
-  instruction = "Aşağıdaki metinden çıkarılabilecek somut aksiyonları, yapılması gerekenleri ve varsa önemli tarihleri listeleyerek bir Eylem Planı oluştur.";
-} else if (mode === 'transcript') {
-  instruction = `
-    SEN ÜST DÜZEY BİR YÖNETİM KURULU ANALİSTİSİN. 
-    Transkripti oku ve "Yönetici Özeti" formatında, sadece en kritik noktaları rapora dök.
+  if (mode === 'short') {
+    instruction = "Aşağıdaki metni en kritik 3-5 madde ile çok kısa ve öz bir şekilde Türkçe özetle. ASLA yıldız (*) kullanma.";
+  } else if (mode === 'detailed') {
+    instruction = `Aşağıdaki dokümanı derinlemesine analiz et. 
+        1. ANA BAŞLIK için sadece "# " kullan.
+        2. ALT BÖLÜMLER için sadece "## " kullan.
+        3. Analizi; Giriş, Teknik Detaylar ve Sonuç bölümlerine ayır.
+        4. Profesyonel, üçüncü tekil şahıs dili kullan.
+        5. ASLA yıldız (*) veya HTML kullanma.`;
+  } else if (mode === 'actions') {
+    instruction = `
+      Bu metinden somut bir eylem planı oluştur.
+      1. ANA BAŞLIK olarak en başa "# EYLEM PLANI" yaz.
+      2. Her bir görev/sorun başlığını "## " ile başlat. (Örn: ## BACKEND PERFORMANS)
+      3. İçeriği maddeler halinde açıkla. 
+      4. Yıldız (*) veya HTML kullanma. Sadece # ve ## kullan.`;
+    } else if (mode === 'transcript') {
+      instruction = `
+        SEN PROFESYONEL BİR YÖNETİM KURULU ANALİSTİSİN. 
+        Transkripti analiz et ve tam olarak aşağıdaki yapıya sadık kalarak resmi bir "Toplantı Tutanağı" oluştur.
+    
+        ANALİZ KURALLARI:
+        1. İSİM BAZLI DİYALOG: Görüş bildiren herkesin ismini "Sn. [İsim Soyisim]:" şeklinde belirt.
+        2. ÜÇÜNCÜ TEKİL ŞAHIS: Konuşmaları "ifade etmiştir", "belirtmiştir", "vurgulamıştır" gibi kurumsal bir dille anlat.
+        3. RADİKAL ÖZETLEME: Selamlaşma, ses kontrolü ve onay cümlelerini (evet, tamam vb.) tamamen ele. Sadece ana gündem konularını ve tartışılan argümanları tut.
+        4. KARAR YAPISI: Her gündem maddesinin sonunda bir uzlaşı varsa, bunu diyalogun hemen altına "Karar:" başlığıyla ayrıca ekle.
+    
+        GÖRSEL VE FORMAT KURALLARI:
+        - ANA BAŞLIK (#): En başa "# TOPLANTI TUTANAĞI" yaz (Lacivert görünecek).
+        - GÜNDEM BAŞLIKLARI (##): Her yeni konuyu "## [GÜNDEM BAŞLIĞI]" şeklinde büyük harflerle yaz (Mor görünecek).
+        - ASLA '*' veya '**' (yıldız) karakteri kullanma.
+        - ASLA HTML etiketi (<span...>) kullanma.
+        - Konuşmacı isimlerinden sonra mutlaka bir alt satıra geçerek anlatımı başlat.
+    
+        ÖRNEK DÜZEN:
+        ## [KONU BAŞLIĞI]
+        Sn. [İsim]:
+        [Üçüncü şahıs anlatımıyla özetlenmiş kurumsal cümle.]
+    
+        Karar: [Alınan net karar cümlesi.]`;
+    }
 
-    LÜTFEN ŞU KURALLARA KESİN OLARAK UY:
-    1. RADİKAL ÖZETLEME: Selamlaşma, teknik kontroller, onay cümleleri ve önemsiz diyalogları tamamen ele. Sadece ana gündemleri ve alınan sonuçları yaz.
-    2. ÜÇÜNCÜ ŞAHIS VE RESMİ DİL: "Belirtmiştir", "İfade etmiştir", "Kararlaştırılmıştır" şeklinde profesyonel bir dil kullan.
-    3. KRİTİK GÖRÜŞLER: Sadece konunun gidişatını değiştiren Sn. [İsim Surname] görüşlerini tek birer cümle ile belirt.
-    4. NET KARARLAR: Her gündem maddesinin sonunda varsa alınan kararı "Karar:" başlığıyla kalınlaştırarak yaz.
-
-    FORMAT KURALLARI:
-    - ANA BAŞLIK için sadece "# " kullan. (Örn: # TOPLANTI TUTANAĞI)
-    - GÜNDEM BAŞLIKLARI için sadece "## " kullan. (Örn: ## 1. ÇEYREK BÜTÇE ANALİZİ)
-    - ASLA HTML kodu veya yıldız (*) kullanma. Sadece düz metin, # ve ## kullan.`;
-}
-  return callGemini(text, instruction, apiKey, model);
+  return callOpenAI(text, instruction, model);
 };
 
-// 2. YENİ: Soru-Cevap Fonksiyonu (Chat özelliği için)
+// 2. Soru-Cevap Fonksiyonu
 export const askQuestion = async (text: string, question: string) => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL ?? "models/gemini-2.5-flash";
-
-  if (!apiKey) throw new Error("GEMINI_API_KEY eksik.");
-
+  const model = "gpt-4o";
   const instruction = `
     Sen bir doküman asistanısın. Aşağıda sana verilen metne dayanarak kullanıcıdan gelen soruyu yanıtla.
     Kurallar:
     1. Yanıtı sadece metne dayanarak ver.
     2. Eğer yanıt metinde yoksa, bunu kibarca belirt.
-    3. Yanıtı Türkçe, net ve kısa ver.
-    
-    SORU: ${question}`;
+    3. Yanıtı Türkçe, net ve kısa ver. ASLA yıldız (*) kullanma.`;
 
-  return callGemini(text, instruction, apiKey, model);
+  const prompt = `${instruction}\n\nSORU: ${question}`;
+  return callOpenAI(text, prompt, model);
 };
 
-// 3. Ortak Gemini Çağrı Yapısı (Kod tekrarını önlemek için)
-async function callGemini(text: string, instruction: string, apiKey: string, model: string) {
-  const payload = {
-    contents: [{
-      parts: [{
-        text: `${instruction}\n\nMETİN: \n\n${text.substring(0, 30000)}`
-      }]
-    }]
-  };
+// 3. Ortak OpenAI Çağrı Yapısı
+async function callOpenAI(text: string, instruction: string, model: string) {
+  try {
+    const response = await openai.chat.completions.create({
+      model: model,
+      messages: [
+        { role: "system", content: instruction },
+        { role: "user", content: `METİN: \n\n${text.substring(0, 50000)}` } // GPT-4o context'i daha geniştir
+      ],
+      temperature: 0.5, // Daha kararlı yanıtlar için
+    });
 
-  const endpoints = [
-    `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${apiKey}`,
-    `https://generativelanguage.googleapis.com/v1/${model}:generateContent?key=${apiKey}`
-  ];
-
-  let lastError: string | undefined;
-
-  for (const url of endpoints) {
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (response.ok) {
-        const out = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!out) throw new Error("Metin alınamadı.");
-        return out;
-      }
-      lastError = data?.error?.message ?? `HTTP ${response.status}`;
-    } catch (err) {
-      lastError = err instanceof Error ? err.message : String(err);
-      continue;
-    }
+    const out = response.choices[0].message.content;
+    
+    if (!out) throw new Error("OpenAI'dan yanıt alınamadı.");
+    
+    // Markdown yıldızlarını temizleyerek SummaryCard ile uyumlu hale getiriyoruz
+    return out.replace(/\*/g, '').trim();
+  } catch (err: any) {
+    console.error("OpenAI Error:", err);
+    
+    if (err.status === 401) throw new Error("OpenAI API Anahtarı geçersiz.");
+    if (err.status === 429) throw new Error("OpenAI Kotası doldu veya bakiye yetersiz.");
+    
+    throw new Error(`OpenAI Hatası: ${err.message}`);
   }
-  throw new Error(`Gemini hatası: ${lastError}`);
 }
