@@ -31,7 +31,7 @@ export const summarizeText = async (text: string, mode: string = 'short') => {
         SEN PROFESYONEL BİR YÖNETİM KURULU ANALİSTİSİN. 
         Transkripti analiz et ve tam olarak aşağıdaki yapıya sadık kalarak resmi bir "Toplantı Tutanağı" oluştur.
     
-        ANALİZ KURALLARI:
+        ANALİZ KURALLARI: Öncelikle toplantı transkripti olup olmadığını kontrol et ve eğer değilse "Bu bir toplantı transkripti değil" diye belirt. Eğer transkript ise aşağıdaki kurallara uygula.
         1. İSİM BAZLI DİYALOG: Görüş bildiren herkesin ismini "Sn. [İsim Soyisim]:" şeklinde belirt.
         2. ÜÇÜNCÜ TEKİL ŞAHIS: Konuşmaları "ifade etmiştir", "belirtmiştir", "vurgulamıştır" gibi kurumsal bir dille anlat.
         3. RADİKAL ÖZETLEME: Selamlaşma, ses kontrolü ve onay cümlelerini (evet, tamam vb.) tamamen ele. Sadece ana gündem konularını ve tartışılan argümanları tut.

@@ -35,60 +35,29 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatAnswer, isChatLoading]);
 
-  // --- Yazım Stilini Düzelten & Yıldızları Temizleyen Yardımcı Fonksiyon ---
+  // Yıldızları temizleyen ve metni normalize eden yardımcı
   const formatContent = (text: string) => {
     if (!text) return "";
-    // 1. Tüm '*' ve '**' işaretlerini temizle
-    // 2. Başlıkların daha iyi algılanması için satır sonlarını normalize et
     return text.replace(/\*/g, '').trim();
   };
 
-  // --- PDF İNDİRME ---
+  // PDF İNDİRME
   const handleDownloadPDF = async () => {
     const element = document.getElementById('analysis-content');
     if (!element) return;
 
     try {
       const html2pdf = (await import('html2pdf.js')).default;
-
       const opt = {
         margin: [15, 15] as [number, number],
         filename: `DeepNode_Analiz_${new Date().getTime()}.pdf`,
         image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true, 
-          letterRendering: true,
-          backgroundColor: '#ffffff',
-          onclone: (clonedDoc: Document) => {
-            const styles = clonedDoc.querySelectorAll('style, link[rel="stylesheet"]');
-            styles.forEach(s => s.remove());
-
-            const styleTag = clonedDoc.createElement('style');
-            styleTag.innerHTML = `
-              #analysis-content {
-                font-family: Arial, sans-serif !important;
-                color: #1e293b !important;
-                padding: 30px !important;
-                background: #ffffff !important;
-              }
-              h1 { font-size: 24pt !important; color: #0f172a !important; margin-bottom: 20px !important; font-weight: bold !important; border-bottom: 2px solid #e2e8f0 !important; padding-bottom: 10px !important; text-transform: uppercase; }
-              h2 { font-size: 16pt !important; color: #4f46e5 !important; margin-top: 25px !important; margin-bottom: 12px !important; font-weight: bold !important; border-left: 5px solid #4f46e5 !important; padding-left: 15px !important; }
-              p { font-size: 11pt !important; line-height: 1.8 !important; color: #334155 !important; margin-bottom: 15px !important; }
-              li { font-size: 11pt !important; line-height: 1.6 !important; color: #334155 !important; margin-bottom: 8px !important; }
-              ul { padding-left: 25px !important; margin-bottom: 20px !important; }
-              strong { font-weight: bold !important; color: #000000 !important; }
-            `;
-            clonedDoc.head.appendChild(styleTag);
-          }
-        },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
         jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
       };
-
       await html2pdf().set(opt).from(element).save();
     } catch (err) {
       console.error("PDF Hatası:", err);
-      alert("PDF oluşturulamadı.");
     }
   };
 
@@ -118,20 +87,17 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
     if (!question.trim() || !summary || isChatLoading) return;
     setIsChatLoading(true);
     setChatAnswer(''); 
-
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pdfText: summary, question: question }),
       });
-
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Cevap alınamadı");
       setChatAnswer(data.answer);
       setQuestion(''); 
     } catch (err) {
-      setChatAnswer("Üzgünüm, şu an yanıtlayamıyorum.");
+      setChatAnswer("Cevap alınamadı.");
     } finally {
       setIsChatLoading(false);
     }
@@ -142,7 +108,7 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
   return (
     <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm ring-1 ring-slate-200/70 border border-slate-100 flex flex-col h-full min-h-[600px] transition-all relative overflow-hidden">
       
-      {/* Başlık ve İndirme Menüsü */}
+      {/* BAŞLIK VE AKSİYONLAR */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 border-b border-slate-50 pb-5">
         <div className="flex items-center gap-3">
           <div className={`p-2.5 rounded-2xl ring-1 ${isLoading ? "bg-indigo-600 animate-pulse ring-indigo-600/20" : "bg-indigo-600/10 ring-indigo-600/15"}`}>
@@ -156,7 +122,7 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
 
         {summary && !isLoading && (
           <div className="flex items-center gap-2">
-            <button onClick={handleDownloadTXT} className="p-3 bg-slate-50 text-slate-500 rounded-2xl hover:bg-slate-100 transition-all ring-1 ring-slate-200" title="Metin İndir">
+            <button onClick={handleDownloadTXT} className="p-3 bg-slate-50 text-slate-500 rounded-2xl hover:bg-slate-100 transition-all ring-1 ring-slate-200">
               <FileText size={16} />
             </button>
             <button onClick={handleDownloadPDF} className="flex items-center gap-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-wider px-5 py-3 rounded-2xl hover:bg-black transition-all shadow-lg active:scale-95">
@@ -169,10 +135,10 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-8">
+      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
         {isLoading ? (
           <div className="space-y-4 animate-in fade-in duration-500">
-             <div className="flex items-center space-x-3 mb-6">
+            <div className="flex items-center space-x-3 mb-6">
               <BrainCircuit className="text-indigo-500 animate-spin" size={20} />
               <span className="text-sm font-medium text-slate-500 tracking-tight italic">DeepNode veriyi işliyor...</span>
             </div>
@@ -185,19 +151,52 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
             <article id="analysis-content" className="prose prose-slate max-w-none mb-10">
               <ReactMarkdown 
                 components={{
-                  p: ({children}) => <p className="mb-6 leading-relaxed text-slate-700 font-medium">{children}</p>,
+                  // ANA BAŞLIK: LACİVERT
+                  h1: ({children}) => (
+                    <h1 className="text-3xl font-black text-[#0f172a] mb-10 mt-6 tracking-tight border-b-8 border-indigo-600/20 pb-4 uppercase italic">
+                      {children}
+                    </h1>
+                  ),
+                  // GÜNDEM BAŞLIKLARI: MOR
+                  h2: ({children}) => (
+                    <h2 className="text-xl font-[900] text-[#4f46e5] mt-12 mb-6 tracking-tighter flex items-center gap-3 italic bg-indigo-50/70 p-4 rounded-xl border-l-[12px] border-[#4f46e5] shadow-sm uppercase">
+                      <div className="w-3 h-3 bg-[#4f46e5] rounded-full animate-pulse flex-shrink-0" />
+                      {children}
+                    </h2>
+                  ),
+                  // ALT BAŞLIKLAR: MAVİ
+                  h3: ({children}) => (
+                    <h3 className="text-lg font-extrabold text-[#2563eb] mt-10 mb-4 tracking-tight flex items-center gap-2.5 italic border-l-4 border-[#2563eb] pl-3 py-1">
+                      <div className="w-2 h-2 bg-[#2563eb] rounded-full flex-shrink-0" />
+                      {children}
+                    </h3>
+                  ),
+                  // PARAGRAFLAR, Sn. VE Karar:
+                  p: ({children}) => {
+                    const text = String(children);
+                    const isSpeaker = text.startsWith("Sn.");
+                    const isDecision = text.startsWith("Karar:");
+
+                    return (
+                      <p className={`mb-4 leading-relaxed font-medium text-[15px] ${
+                        isSpeaker ? "text-slate-900 font-bold border-l-4 border-slate-200 pl-4 py-1 mt-6" : 
+                        isDecision ? "text-[#4f46e5] font-black bg-indigo-50/80 p-4 rounded-lg border-2 border-indigo-100 mt-6 shadow-inner" : 
+                        "text-slate-600 pl-5"
+                      }`}>
+                        {children}
+                      </p>
+                    );
+                  },
                   strong: ({children}) => <strong className="font-bold text-slate-950">{children}</strong>,
                   ul: ({children}) => <ul className="list-none pl-0 space-y-3 mb-8">{children}</ul>,
                   li: ({children}) => <li className="flex items-start gap-3 border-l-2 border-indigo-100 pl-4 py-1 hover:border-indigo-500 transition-colors">{children}</li>,
-                  h1: ({children}) => <h1 className="text-2xl font-black text-slate-900 mb-8 tracking-tight border-b-2 border-slate-100 pb-3 uppercase">{children}</h1>,
-                  h2: ({children}) => <h2 className="text-lg font-bold text-indigo-700 mt-10 mb-4 tracking-tight flex items-center gap-2 italic">{children}</h2>,
                 }}
               >
                 {formatContent(summary)}
               </ReactMarkdown>
             </article>
 
-            {/* Chat Bölümü */}
+            {/* CHAT BÖLÜMÜ */}
             <div className="mt-12 pt-8 border-t border-slate-100 space-y-6 bg-slate-50/30 -mx-4 px-4 pb-4 rounded-b-[2.5rem]">
               <div className="flex items-center gap-2 text-slate-800 font-bold text-sm italic">
                 <MessageSquare size={18} className="text-indigo-600" /> DeepNode Soru-Cevap
@@ -206,20 +205,20 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
                 <input 
                   type="text" value={question} onChange={(e) => setQuestion(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAskQuestion()}
-                  placeholder="Bu rapor hakkında derinlemesine bir soru sor..."
+                  placeholder="Rapor hakkında soru sor..."
                   className="w-full bg-white border border-slate-200 rounded-[1.25rem] px-5 py-4 pr-14 text-sm outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm italic"
                 />
-                <button onClick={handleAskQuestion} disabled={isChatLoading || !question.trim()} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:bg-slate-200 transition-all shadow-md">
+                <button onClick={handleAskQuestion} disabled={isChatLoading || !question.trim()} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-md">
                   {isChatLoading ? <Loader2 size={18} className="animate-spin" /> : <SendHorizontal size={18} />}
                 </button>
               </div>
 
-              {(isChatLoading || chatAnswer) && (
+              {chatAnswer && (
                 <div className="bg-white border border-indigo-100 p-5 rounded-[1.5rem] shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="flex items-center gap-2 mb-3 text-indigo-600 font-bold text-[10px] uppercase tracking-[0.2em]">
+                  <div className="flex items-center gap-2 mb-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
                     <Bot size={14} /> Intelligence Response
                   </div>
-                  <div className="text-sm text-slate-700 leading-relaxed font-medium prose-sm prose-slate">
+                  <div className="text-sm text-slate-700 leading-relaxed font-medium">
                     <ReactMarkdown>{formatContent(chatAnswer)}</ReactMarkdown>
                   </div>
                 </div>
@@ -229,10 +228,8 @@ export default function SummaryCard({ summary, isLoading }: SummaryCardProps) {
           </div>
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-center space-y-6 py-12">
-             <div className="relative w-24 h-24 bg-slate-50 rounded-[2rem] flex items-center justify-center border border-slate-100 shadow-inner">
-                <BrainCircuit size={40} className="text-slate-200" />
-             </div>
-             <p className="text-slate-900 font-bold text-lg italic tracking-tight">DeepNode Analyze Core</p>
+            <BrainCircuit size={40} className="text-slate-200" />
+            <p className="text-slate-900 font-bold text-lg italic tracking-tight">DeepNode Analyze Core</p>
           </div>
         )}
       </div>
