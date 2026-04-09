@@ -22,5 +22,40 @@ DeepNode, **OpenAI GPT-4o** motoruyla güçlendirilmiş; karmaşık toplantı tr
 
 ### 1. Projeyi Klonlayın
 ```bash
-git clone [https://github.com/kullaniciadi/deepnode.git](https://github.com/kullaniciadi/deepnode.git)
-cd deepnode
+git clone [https://github.com/cnscyl/pdflizer.git](https://github.com/cnscyl/pdflizer.git)
+cd pdflizer
+
+### 2. API Yapılandırması
+Ana dizinde `.env.local` dosyası oluşturun ve OpenAI API anahtarınızı ekleyin:
+
+> ⚠️ Not: Güvenlik nedeniyle bu dosya **GitHub'a yüklenmemelidir.**
+
+```env
+OPENAI_API_KEY=sk-your-api-key-here
+```
+
+### 3. Uygulamayı Başlatın
+```bash
+npm run dev
+```
+
+Ardından tarayıcınızdan şu adrese gidin:
+
+👉 http://localhost:3000
+
+---
+
+## 🛠️ Teknik Yığın (Tech Stack)
+
+- **Core:** Next.js (App Router), TypeScript  
+- **AI Engine:** OpenAI GPT-4o API  
+- **Styling:** Tailwind CSS, Lucide Icons  
+- **Markdown:** React-Markdown  
+- **PDF Engine:** Html2pdf.js, PDF.js  
+
+---
+
+## 📝 Notlar
+
+- 🔐 **Güvenlik:** API anahtarınızın `.gitignore` dosyasında listelendiğinden emin olun.  
+- 📄 **Format:** En iyi sonuçlar için toplantı kayıtlarında konuşmacı isimlerinin net olması önerilir.  
